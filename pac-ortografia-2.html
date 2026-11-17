@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pac-Ortografia</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#05051a;color:#fff;font-family:"Press Start 2P",monospace;display:flex;justify-content:center;padding:12px}
+.wrap{width:100%;max-width:780px}
+h1{color:#ffd800;text-align:center;font-size:clamp(16px,4vw,26px);text-shadow:3px 3px 0 #2121ff;margin:8px 0 14px}
+.card{border:4px solid #2121ff;border-radius:14px;padding:16px;background:#000;box-shadow:0 0 18px #2121ff}
+label{display:block;font-size:10px;margin:10px 0 4px;color:#7df}
+input{width:100%;padding:10px;font:16px Verdana,sans-serif;border:3px solid #2121ff;border-radius:8px;background:#0a0a30;color:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.txt{font:14px/1.5 Verdana,sans-serif;background:#0a0a30;border-radius:8px;padding:10px;margin:12px 0}
+.lvs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0}
+button{font:inherit;font-size:11px;cursor:pointer;border:0;border-radius:10px;padding:12px;background:#ffd800;color:#000;box-shadow:0 4px 0 #a08a00}
+button:active{transform:translateY(3px);box-shadow:none}
+.lv{background:#222;color:#fff;box-shadow:0 4px 0 #000;border:3px solid #444}
+.lv.on{background:#2121ff;border-color:#ffd800}
+.big{width:100%;font-size:14px;padding:16px;margin-top:8px}
+.hud{display:flex;justify-content:space-between;gap:6px;font-size:10px;margin-bottom:8px;color:#ffd800;flex-wrap:wrap}
+canvas{width:100%;border-radius:10px;border:3px solid #2121ff;display:block;background:#000}
+#ans{margin-top:10px;font-size:20px;text-align:center;letter-spacing:2px}
+#ans.bad{border-color:#f00;animation:sh .25s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.hide{display:none}
+#msg{color:#f66;font-size:10px;margin-top:8px;min-height:12px}
+.res{text-align:center}.res .n{font-size:34px;color:#ffd800;margin:10px 0}
+.stars{font-size:34px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+</style></head><body><div class="wrap">
+<h1>👾 PAC-ORTOGRAFIA 👾</h1>
+
+<div id="setup" class="card">
+ <div class="row"><div><label>NOME</label><input id="nome" maxlength="30"></div><div><label>COGNOME</label><input id="cognome" maxlength="30"></div></div>
+ <div class="row"><div><label>DATA</label><input id="data" type="date"></div><div><label>CLASSE</label><input id="classe" maxlength="10" placeholder="es. 1A"></div></div>
+ <label>SCEGLI IL LIVELLO</label>
+ <div class="lvs"><button class="lv on" data-l="1">1 FACILE</button><button class="lv" data-l="2">2 MEDIO</button><button class="lv" data-l="3">3 DIFFICILE</button></div>
+ <div class="txt"><b>Come si gioca</b><br>
+ 👻 Dall'alto scendono dei fantasmini con una <b>parola incompleta</b> (i trattini __ nascondono le lettere da ricordare: ci, ce, gi, ge, chi, che, ghi, ghe, gn, sci, gli…). La figura ti aiuta a capire quale parola è.<br>
+ ⌨️ Scrivi la parola <b>completa e corretta</b> con la tastiera: se è giusta Pac-Man la mangia da solo! Se ti sbagli premi <b>Invio</b> e riprova.<br>
+ ⏱️ Hai <b>60 secondi</b> per ogni livello. Ogni parola giusta vale 10 punti, ogni errore toglie 2 punti. I fantasmini che toccano il fondo sono parole perse.<br>
+ 🏆 Alla fine vedi il tuo risultato e puoi scaricare il report.</div>
+ <div id="msg"></div>
+ <button class="big" id="go">▶ GIOCA</button>
+</div>
+
+<div id="game" class="card hide">
+ <div class="hud"><span id="hPl"></span><span id="hLv"></span><span id="hT">⏱ 60</span><span id="hS">PUNTI 0</span></div>
+ <canvas id="cv" width="760" height="480"></canvas>
+ <input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="scrivi la parola e premi Invio">
+</div>
+
+<div id="end" class="card hide res">
+ <div style="color:#ffd800;font-size:14px">TEMPO SCADUTO!</div>
+ <div class="stars" id="stars"></div>
+ <div class="n" id="eS"></div>
+ <div class="txt" id="eD" style="text-align:left"></div>
+ <div class="acts">
+  <button id="dl">💾 SCARICA REPORT</button><button id="again">🔁 RIPROVA</button>
+  <button id="next">➡ LIVELLO SUCCESSIVO</button><button id="home">🏠 CAMBIA DATI</button>
+ </div>
+</div>
+</div>
+<script>
+const $=id=>document.getElementById(id),W=760,H=480,cv=$('cv'),cx=cv.getContext('2d');
+const D={
+1:{sp:15,gap:4000,w:[["[ci]elo","🌤️"],["[ce]na","🍽️"],["[ci]liegia","🍒"],["[chi]ave","🔑"],["[ghi]accio","🧊"],["[ghe]pardo","🐆"],["[gi]raffa","🦒"],["[ge]lato","🍦"],["[ci]gno","🦢"],["[chi]tarra","🎸"],["[ci]cala","🦗"],["[gi]rasole","🌻"],["[ge]nio","🧞"],["[chi]occiola","🐌"],["[gi]ardino","🌷"]]},
+2:{sp:21,gap:3400,w:[["[gn]omo","🧙"],["[sci]arpa","🧣"],["[sce]riffo","🤠"],["fo[gli]a","🍃"],["bi[gli]etto","🎫"],["fami[gli]a","👨‍👩‍👧"],["ba[gn]o","🛁"],["ra[gn]o","🕷️"],["[sci]mmia","🐒"],["vali[gi]a","🧳"],["aran[ci]a","🍊"],["cami[ci]a","👕"],["pio[gg]ia","🌧️"],["ba[ci]o","😘"],["pe[sc]e","🐟"]]},
+3:{sp:29,gap:2800,w:[["a[cq]ua","💧"],["s[cie]nziato","🔬"],["[cuo]re","💗"],["[squ]adra","📐"],["[ghi]rlanda","🎄"],["[gi]ocattolo","🧸"],["cu[cchi]aio","🥄"],["spe[cchi]o","🪞"],["o[cchi]ali","👓"],["orolo[gi]o","⏰"],["con[chi]glia","🐚"],["pasti[cce]ria","🧁"],["spia[gg]ia","🏖️"],["[scuo]la","🏫"],["[qu]adro","🖼️"]]}
+};
+const NM={1:"FACILE",2:"MEDIO",3:"DIFFICILE"},COL=['#ff2020','#ffb8ff','#00e5ff','#ffb852'];
+let lvl=1,P={},res=[],S=null,raf,last=0;
+$('data').value=new Date().toLocaleDateString('en-CA');
+document.querySelectorAll('.lv').forEach(b=>b.onclick=()=>{lvl=+b.dataset.l;document.querySelectorAll('.lv').forEach(x=>x.classList.toggle('on',x===b))});
+const show=id=>['setup','game','end'].forEach(s=>$(s).classList.toggle('hide',s!==id));
+$('go').onclick=()=>{
+ P={n:$('nome').value.trim(),c:$('cognome').value.trim(),d:$('data').value,k:$('classe').value.trim()};
+ if(!P.n||!P.c||!P.k){$('msg').textContent='Scrivi nome, cognome e classe per iniziare!';return}
+ $('msg').textContent='';start()};
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function start(){
+ S={l:lvl,t:60,sc:0,ok:[],miss:[],err:0,ws:[],pops:[],q:[],sp:0,px:W/2,at:0,fl:0};
+ $('hPl').textContent=(P.n+' '+P.c).toUpperCase().slice(0,22);$('hLv').textContent='LIV. '+NM[lvl];
+ show('game');$('ans').value='';$('ans').focus();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+function spawn(){
+ if(!S.q.length)S.q=shuffle(D[S.l].w);
+ const [raw,emo]=S.q.pop(),m=raw.match(/^(.*?)\[(.+?)\](.*)$/);
+ let x,tries=0;do{x=70+Math.random()*(W-140);tries++}while(tries<20&&S.ws.some(w=>w.y<130&&Math.abs(w.x-x)<150));
+ S.ws.push({x,y:-40,pre:m[1],mk:m[2],post:m[3],full:m[1]+m[2]+m[3],emo,col:COL[Math.random()*4|0],lab:m[1]+'_'.repeat(m[2].length)+m[3]})}
+function loop(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;S.t-=dt;S.at+=dt;S.sp+=dt*1000;S.fl=Math.max(0,S.fl-dt);
+ if(S.sp>D[S.l].gap){S.sp=0;spawn()}
+ const v=D[S.l].sp;
+ S.ws=S.ws.filter(w=>{w.y+=v*dt;if(w.y>H-100){S.miss.push(w.full);S.fl=.3;$('ans').value='';return false}return true});
+ S.pops=S.pops.filter(p=>(p.a-=dt)>0);
+ if(S.ws.length){const t=S.ws.reduce((a,b)=>b.y>a.y?b:a);S.px+=(t.x-S.px)*Math.min(1,dt*6)}
+ $('hT').textContent='⏱ '+Math.max(0,Math.ceil(S.t));$('hS').textContent='PUNTI '+S.sc;
+ draw();
+ if(S.t<=0)return finish();raf=requestAnimationFrame(loop)}
+$('ans').addEventListener('input',e=>{
+ if(!S)return;const v=e.target.value.trim().toLowerCase();if(!v)return;
+ const hit=S.ws.filter(w=>w.full===v).sort((a,b)=>b.y-a.y)[0];
+ if(hit){S.ws.splice(S.ws.indexOf(hit),1);S.ok.push(hit.full);S.sc+=10;S.px=hit.x;S.pops.push({x:hit.x,y:hit.y,a:.8});e.target.value=''}});
+$('ans').addEventListener('keydown',e=>{
+ if(e.key!=='Enter'||!S)return;const v=e.target.value.trim();
+ if(v){S.err++;S.sc=Math.max(0,S.sc-2);e.target.classList.remove('bad');void e.target.offsetWidth;e.target.classList.add('bad')}
+ e.target.value=''});
+cv.onclick=()=>$('ans').focus();
+function ghost(x,y,c){
+ cx.fillStyle=c;cx.beginPath();cx.arc(x,y,20,Math.PI,0);cx.lineTo(x+20,y+20);cx.lineTo(x+10,y+13);cx.lineTo(x,y+20);cx.lineTo(x-10,y+13);cx.lineTo(x-20,y+20);cx.closePath();cx.fill();
+ cx.fillStyle='#fff';[-7,7].forEach(d=>{cx.beginPath();cx.arc(x+d,y-3,5.5,0,7);cx.fill()});
+ cx.fillStyle='#2121ff';[-7,7].forEach(d=>{cx.beginPath();cx.arc(x+d,y-1,2.5,0,7);cx.fill()})}
+function draw(){
+ cx.fillStyle='#000';cx.fillRect(0,0,W,H);
+ cx.strokeStyle='#2121ff';cx.lineWidth=4;
+ [[10,10,36,200],[10,250,36,150],[W-46,10,36,200],[W-46,250,36,150]].forEach(r=>{cx.beginPath();cx.roundRect(...r,14);cx.stroke()});
+ cx.fillStyle='#ffd8a8';for(let x=30;x<W;x+=34){cx.beginPath();cx.arc(x,H-10,3,0,7);cx.fill()}
+ const typed=$('ans').value.trim().toLowerCase();
+ S.ws.forEach(w=>{
+  cx.font='28px serif';cx.textAlign='center';cx.fillText(w.emo,w.x,w.y-26);
+  ghost(w.x,w.y,w.col);
+  cx.font='bold 20px Verdana';const tw=cx.measureText(w.lab).width+20,act=typed&&w.full.startsWith(typed);
+  cx.fillStyle=act?'#ffd800':'#0a0a30';cx.strokeStyle=act?'#fff':w.col;cx.lineWidth=3;
+  cx.beginPath();cx.roundRect(w.x-tw/2,w.y+26,tw,32,8);cx.fill();cx.stroke();
+  cx.fillStyle=act?'#000':'#fff';cx.fillText(w.lab,w.x,w.y+49)});
+ const py=H-45,m=.12+.3*Math.abs(Math.sin(S.at*12));
+ cx.fillStyle='#ffd800';cx.beginPath();cx.moveTo(S.px,py);cx.arc(S.px,py,24,-Math.PI/2+m,-Math.PI/2-m+Math.PI*2);cx.closePath();cx.fill();
+ cx.fillStyle='#000';cx.beginPath();cx.arc(S.px+9,py-8,3,0,7);cx.fill();
+ S.pops.forEach(p=>{cx.fillStyle='#ffd800';cx.font='bold 22px Verdana';cx.fillText('+10',p.x,p.y-(.8-p.a)*60)});
+ if(S.fl>0){cx.fillStyle='rgba(255,0,0,'+S.fl+')';cx.fillRect(0,H-6,W,6)}}
+function finish(){
+ cancelAnimationFrame(raf);const r={l:S.l,sc:S.sc,ok:S.ok,miss:S.miss,err:S.err};res.push(r);
+ const n=r.ok.length,st=n>=10?3:n>=6?2:n>=3?1:0;
+ $('stars').textContent='⭐'.repeat(st)+'☆'.repeat(3-st);
+ $('eS').textContent=r.sc+' PUNTI';
+ $('eD').innerHTML='✅ Parole corrette: <b>'+n+'</b><br>❌ Errori: <b>'+r.err+'</b><br>👻 Parole perse: <b>'+r.miss.length+'</b><br><br>'+
+  (r.miss.length?'Da ripassare: <b>'+[...new Set(r.miss)].join(', ')+'</b><br><br>':'')+
+  (st==3?'Fantastico, sei un campione di ortografia! 🏆':st==2?'Ottimo lavoro, ci sei quasi! 💪':'Continua ad allenarti, migliorerai! 🚀');
+ $('next').style.display=S.l<3?'':'none';S=null;show('end')}
+$('again').onclick=start;
+$('next').onclick=()=>{lvl=Math.min(3,lvl+1);document.querySelectorAll('.lv').forEach(x=>x.classList.toggle('on',+x.dataset.l===lvl));start()};
+$('home').onclick=()=>show('setup');
+$('dl').onclick=()=>{
+ let t='REPORT PAC-ORTOGRAFIA\r\n=====================\r\nNome: '+P.n+'\r\nCognome: '+P.c+'\r\nClasse: '+P.k+'\r\nData: '+P.d+'\r\n';
+ res.forEach((r,i)=>{t+='\r\nTentativo '+(i+1)+' - Livello '+r.l+' ('+NM[r.l]+') - tempo 60 secondi\r\n  Punti: '+r.sc+'\r\n  Parole corrette: '+r.ok.length+(r.ok.length?' ('+r.ok.join(', ')+')':'')+'\r\n  Errori: '+r.err+'\r\n  Parole perse: '+r.miss.length+(r.miss.length?' ('+r.miss.join(', ')+')':'')+'\r\n'});
+ const best=Math.max(...res.map(r=>r.sc));t+='\r\nMiglior punteggio: '+best+'\r\n';
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/plain;charset=utf-8'}));
+ a.download='report_'+P.c+'_'+P.n+'.txt';a.click()};
+</script></body></html>
