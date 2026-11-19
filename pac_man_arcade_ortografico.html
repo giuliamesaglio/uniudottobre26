@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pac-Man Ortografico - Arcade Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Press Start 2P & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        .font-arcade {
+            font-family: 'Press Start 2P', monospace;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050511;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Retro arcade scanline effect */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+        }
+        /* Neon glow utilities */
+        .neon-box-yellow {
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.4), inset 0 0 15px rgba(250, 204, 21, 0.2);
+            border: 2px solid #facc15;
+        }
+        .neon-box-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            border: 2px solid #06b6d4;
+        }
+        .neon-text-yellow {
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
+        }
+        .neon-text-pink {
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.7);
+        }
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2s infinite ease-in-out;
+        }
+        @keyframes float-ghost {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-ghost {
+            animation: float-ghost 1.5s infinite ease-in-out;
+        }
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between scanlines relative select-none">
+
+    <!-- Header / Navbar -->
+    <header class="w-full bg-slate-900/80 border-b border-yellow-500/30 px-6 py-4 flex items-center justify-between no-print z-20 backdrop-blur-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-slate-950 font-arcade text-xs shadow-[0_0_10px_#facc15]">P</div>
+            <h1 class="font-arcade text-yellow-400 text-sm md:text-base tracking-wider neon-text-yellow">PAC-MAN ORTOGRAFICO</h1>
+        </div>
+        <div class="text-xs text-slate-400 font-arcade hidden sm:block">1ª Media Edition (CI-CE-GI-GE-CHI-GHE)</div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6 relative z-10">
+
+        <!-- SCREEN 1: REGISTRATION / HOME -->
+        <div id="screen-reg" class="w-full max-w-xl bg-slate-900/90 p-6 sm:p-8 rounded-2xl neon-box-yellow backdrop-blur-md no-print">
+            <div class="text-center mb-8">
+                <h2 class="font-arcade text-yellow-400 text-xl sm:text-2xl mb-2 neon-text-yellow">ACCADEMIA ARCADE</h2>
+                <p class="text-slate-300 text-sm">Allenati con i gruppi sillabici difficili (<span class="text-yellow-400 font-semibold">ci, ce, gi, ge, chi, ghe, ghiaccio, formaggio...</span>)</p>
+            </div>
+
+            <form id="form-reg" class="space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-arcade text-yellow-400 mb-2">NOME</label>
+                        <input type="text" id="input-nome" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-yellow-400 transition" placeholder="Es. Mario">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-arcade text-yellow-400 mb-2">COGNOME</label>
+                        <input type="text" id="input-cognome" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-yellow-400 transition" placeholder="Es. Rossi">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-arcade text-cyan-400 mb-2">DATA</label>
+                        <input type="date" id="input-data" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-arcade text-cyan-400 mb-2">CLASSE</label>
+                        <input type="text" id="input-classe" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-cyan-400 transition" placeholder="Es. 1ªA">
+                    </div>
+                </div>
+
+                <!-- DIFFICULTY LEVEL SELECTION -->
+                <div>
+                    <label class="block text-xs font-arcade text-pink-400 mb-3">SEleziona LIVELLO DI DIFFICOLTÀ</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="level" value="1" checked class="peer sr-only">
+                            <div class="bg-slate-950 border-2 border-slate-700 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/10 rounded-xl p-3 text-center transition hover:border-slate-500">
+                                <div class="font-arcade text-yellow-400 text-xs mb-1">LIVELLO 1</div>
+                                <div class="text-[11px] text-slate-400">Facile & Calmo</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="level" value="2" class="peer sr-only">
+                            <div class="bg-slate-950 border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:bg-cyan-400/10 rounded-xl p-3 text-center transition hover:border-slate-500">
+                                <div class="font-arcade text-cyan-400 text-xs mb-1">LIVELLO 2</div>
+                                <div class="text-[11px] text-slate-400">Medio / Standard</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="level" value="3" class="peer sr-only">
+                            <div class="bg-slate-950 border-2 border-slate-700 peer-checked:border-pink-400 peer-checked:bg-pink-400/10 rounded-xl p-3 text-center transition hover:border-slate-500">
+                                <div class="font-arcade text-pink-400 text-xs mb-1">LIVELLO 3</div>
+                                <div class="text-[11px] text-slate-400">Difficile / Rapido</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-arcade py-4 rounded-xl font-bold tracking-wider hover:opacity-95 transform active:scale-95 transition shadow-[0_0_20px_rgba(250,204,21,0.5)]">
+                    INIZIA PARTITA 🕹️
+                </button>
+            </form>
+        </div>
+
+        <!-- SCREEN 2: GAMEPLAY ARENA -->
+        <div id="screen-game" class="w-full max-w-4xl h-[650px] bg-slate-900/95 rounded-2xl neon-box-cyan flex flex-col justify-between relative overflow-hidden hidden no-print">
+            
+            <!-- Top HUD / Status Bar -->
+            <div class="bg-slate-950/80 px-6 py-3 border-b border-cyan-500/30 flex flex-wrap items-center justify-between gap-4 text-xs font-arcade">
+                <div class="flex items-center space-x-6">
+                    <div>PUNTI: <span id="hud-score" class="text-yellow-400 text-sm">0</span></div>
+                    <div>LIV: <span id="hud-level" class="text-cyan-400 text-sm">1</span></div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-400">VITE:</span>
+                    <div id="hud-lives" class="flex space-x-1 text-pink-500 text-base">
+                        ❤️❤️❤️
+                    </div>
+                </div>
+                <div>MANGIATE: <span id="hud-eaten" class="text-emerald-400 text-sm">0</span>/15</div>
+            </div>
+
+            <!-- Game Arena Canvas / Drop Zone -->
+            <div id="game-arena" class="flex-grow relative overflow-hidden bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+                <!-- Falling words container -->
+                <div id="words-container" class="absolute inset-0 w-full h-full"></div>
+
+                <!-- Retro Ghost Decorative Watermark -->
+                <div class="absolute bottom-4 right-4 opacity-10 flex space-x-3 pointer-events-none">
+                    <div class="text-5xl animate-ghost">👻</div>
+                    <div class="text-5xl animate-ghost" style="animation-delay: 0.5s;">👾</div>
+                </div>
+            </div>
+
+            <!-- Bottom Typing & Input Zone -->
+            <div class="bg-slate-950 p-4 sm:p-5 border-t border-cyan-500/30 flex flex-col sm:flex-row items-center gap-4">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-yellow-400 font-arcade text-sm">⌨️</div>
+                    <input type="text" id="word-input" autocomplete="off" autofocus spellcheck="false"
+                        class="w-full bg-slate-900 border-2 border-cyan-500/60 rounded-xl pl-12 pr-4 py-3 text-slate-100 font-semibold tracking-wide text-lg focus:outline-none focus:border-yellow-400 focus:shadow-[0_0_15px_rgba(250,204,21,0.3)] transition"
+                        placeholder="Digita la parola che cade e premi Spazio o Invio...">
+                </div>
+                <div class="text-xs text-slate-400 text-center sm:text-right w-full sm:w-auto shrink-0 font-arcade">
+                    CORRETTE: <span id="input-feedback" class="text-yellow-400 font-bold">Pronto!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: REPORT & GAME OVER -->
+        <div id="screen-report" class="w-full max-w-2xl bg-slate-900/95 p-6 sm:p-8 rounded-2xl neon-box-yellow backdrop-blur-md hidden">
+            <div class="text-center mb-6">
+                <div class="inline-block px-4 py-1 rounded-full bg-yellow-400/10 text-yellow-400 font-arcade text-xs mb-3 border border-yellow-400/30" id="report-badge">SESSIONE COMPLETATA</div>
+                <h2 id="report-title" class="font-arcade text-yellow-400 text-2xl mb-1 neon-text-yellow">GIOCO TERMINATO</h2>
+                <p class="text-slate-400 text-xs">Report ufficiale delle performance ortografiche</p>
+            </div>
+
+            <!-- Student Data Card -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[10px]">ALUNNO/A</span>
+                    <span id="rep-nome" class="font-bold text-slate-200 text-sm">Mario Rossi</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[10px]">DATA</span>
+                    <span id="rep-data" class="font-bold text-slate-200 text-sm">18/11/2026</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[10px]">CLASSE</span>
+                    <span id="rep-classe" class="font-bold text-slate-200 text-sm">1ªA</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[10px]">DIFFICOLTÀ</span>
+                    <span id="rep-diff" class="font-bold text-cyan-400 text-sm">Livello 2</span>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-yellow-500/30 text-center">
+                    <div class="font-arcade text-yellow-400 text-xl mb-1" id="rep-score">0</div>
+                    <div class="text-[11px] text-slate-400">Punteggio Finale</div>
+                </div>
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-emerald-500/30 text-center">
+                    <div class="font-arcade text-emerald-400 text-xl mb-1" id="rep-eaten">0</div>
+                    <div class="text-[11px] text-slate-400">Parole Mangiate</div>
+                </div>
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-pink-500/30 text-center">
+                    <div class="font-arcade text-pink-400 text-xl mb-1" id="rep-missed">0</div>
+                    <div class="text-[11px] text-slate-400">Vite Perse</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 no-print">
+                <button onclick="window.print()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-arcade py-4 rounded-xl font-bold transition shadow-[0_0_15px_rgba(6,182,212,0.4)] flex items-center justify-center space-x-2">
+                    <span>🖨️ STAMPA / SALVA REPORT</span>
+                </button>
+                <button onclick="resetToRegistration()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-yellow-400 font-arcade py-4 rounded-xl font-bold transition border border-yellow-400/40">
+                    🔄 NUOVA PARTITA
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-4 text-center text-xs text-slate-500 no-print font-arcade">
+        Pac-Man Ortho Arcade • Didattica Digitale 1ª Media
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Word bank focused on tricky Italian orthography (ci, ce, gi, ge, chi, ghe, etc.)
+        const wordBank = [
+            // CI / CE
+            "cielo", "ceramica", "cicala", "cenciare", "goccia", "camicia", "cestone", "società", "provincia", "cervello",
+            // GI / GE
+            "giungla", "gelato", "giraffa", "gemma", "gita", "genio", "giovane", "gioco", "giallo", "geranio",
+            // CHI / GHE
+            "chitarra", "pacchetto", "cherubino", "ghepardo", "margherita", "alghe", "laghi", "funghi", "formaggio", "botteghe",
+            // GHI / GHE / GIA / GIO
+            "ghiaccio", "ghisa", "ghirlanda", "spaghi", "lunghezze", "specie", "cigno", "funghi", "bottiglia", "famiglia"
+        ];
+
+        // Game State Variables
+        let gameState = {
+            nome: "",
+            cognome: "",
+            data: "",
+            classe: "",
+            level: 1,
+            score: 0,
+            lives: 3,
+            eatenCount: 0,
+            targetCount: 15, // words to win a level
+            activeWords: [],
+            gameInterval: null,
+            spawnInterval: null,
+            isrunning: false
+        };
+
+        // DOM Elements
+        const screenReg = document.getElementById('screen-reg');
+        const screenGame = document.getElementById('screen-game');
+        const screenReport = document.getElementById('screen-report');
+        const formReg = document.getElementById('form-reg');
+        const inputNome = document.getElementById('input-nome');
+        const inputCognome = document.getElementById('input-cognome');
+        const inputData = document.getElementById('input-data');
+        const inputClasse = document.getElementById('input-classe');
+        const wordInput = document.getElementById('word-input');
+        const wordsContainer = document.getElementById('words-container');
+        const hudScore = document.getElementById('hud-score');
+        const hudLevel = document.getElementById('hud-level');
+        const hudLives = document.getElementById('hud-lives');
+        const hudEaten = document.getElementById('hud-eaten');
+        const inputFeedback = document.getElementById('input-feedback');
+
+        // Set default date to today
+        inputData.valueAsDate = new Date();
+
+        // Registration form submission
+        formReg.addEventListener('submit', (e) => {
+            e.preventDefault();
+            gameState.nome = inputNome.value.trim();
+            gameState.cognome = inputCognome.value.trim();
+            gameState.data = inputData.value;
+            gameState.classe = inputClasse.value.trim();
+            
+            const selectedLevel = document.querySelector('input[name="level"]:checked');
+            gameState.level = selectedLevel ? parseInt(selectedLevel.value) : 1;
+
+            startGameObject();
+        });
+
+        function startGameObject() {
+            // Reset stats
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.eatenCount = 0;
+            gameState.activeWords = [];
+            gameState.isrunning = true;
+
+            // Switch screens
+            screenReg.classList.add('hidden');
+            screenReport.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+
+            updateHUD();
+            wordInput.value = "";
+            wordInput.focus();
+
+            // Start game loops
+            startGameLoops();
+        }
+
+        function updateHUD() {
+            hudScore.textContent = gameState.score;
+            hudLevel.textContent = gameState.level;
+            hudEaten.textContent = gameState.eatenCount;
+            
+            let hearts = "";
+            for (let i = 0; i < 3; i++) {
+                hearts += i < gameState.lives ? "❤️" : "🖤";
+            }
+            hudLives.textContent = hearts;
+        }
+
+        function startGameLoops() {
+            // Clear existing intervals if any
+            clearInterval(gameState.gameInterval);
+            clearInterval(gameState.spawnInterval);
+
+            // Settings based on level
+            // Level 1: slower speed, slower spawn
+            // Level 2: medium
+            // Level 3: slightly faster but student-friendly
+            let speedMultiplier = gameState.level === 1 ? 0.6 : (gameState.level === 2 ? 1.0 : 1.4);
+            let spawnRate = gameState.level === 1 ? 3200 : (gameState.level === 2 ? 2600 : 2000);
+
+            // Spawning words
+            gameState.spawnInterval = setInterval(() => {
+                if (!gameState.isrunning) return;
+                spawnWord();
+            }, spawnRate);
+
+            // Animation and movement loop (approx 60fps equivalent using setInterval)
+            gameState.gameInterval = setInterval(() => {
+                if (!gameState.isrunning) return;
+                updateWords(speedMultiplier);
+            }, 30);
+        }
+
+        function spawnWord() {
+            if (gameState.activeWords.length >= 6) return; // limit concurrent words on screen
+
+            const randomWord = wordBank[Math.floor(Math.random() * wordBank.length)];
+            // Avoid duplicate active words
+            if (gameState.activeWords.some(w => w.text === randomWord)) return;
+
+            // Pick random horizontal position percentage (10% to 75%)
+            const randomX = Math.floor(Math.random() * 65) + 10;
+
+            const wordObj = {
+                id: Math.random().toString(36.2),
+                text: randomWord,
+                x: randomX,
+                y: 0, // start at top of container
+                element: null
+            };
+
+            // Create DOM element for word
+            const el = document.createElement('div');
+            el.className = "absolute font-arcade text-sm sm:text-base px-3 py-1.5 rounded-lg bg-slate-950/90 border border-yellow-400/50 text-yellow-300 shadow-[0_0_10px_rgba(250,204,21,0.2)] transition-transform duration-75 whitespace-nowrap";
+            el.style.left = `${wordObj.x}%`;
+            el.style.top = `0px`;
+            el.textContent = wordObj.text;
+            
+            wordsContainer.appendChild(el);
+            wordObj.element = el;
+            gameState.activeWords.push(wordObj);
+        }
+
+        function updateWords(speedMultiplier) {
+            const containerHeight = wordsContainer.clientHeight - 40; // padding offset
+
+            for (let i = gameState.activeWords.length - 1; i >= 0; i--) {
+                let w = gameState.activeWords[i];
+                // Move down
+                w.y += (1.2 * speedMultiplier);
+                w.element.style.top = `${w.y}px`;
+
+                // Check if word hits bottom without manual backspace -> auto vanish & lose life
+                if (w.y >= containerHeight) {
+                    // Remove element
+                    w.element.remove();
+                    gameState.activeWords.splice(i, 1);
+                    
+                    // Lose life
+                    gameState.lives--;
+                    triggerMissEffect();
+                    updateHUD();
+
+                    if (gameState.lives <= 0) {
+                        endGame(false);
+                        return;
+                    }
+                }
+            }
+        }
+
+        function triggerMissEffect() {
+            screenGame.classList.add('border-pink-500');
+            setTimeout(() => {
+                screenGame.classList.remove('border-pink-500');
+            }, 300);
+        }
+
+        // Handle typing input
+        wordInput.addEventListener('input', (e) => {
+            const typedVal = wordInput.value.trim().toLowerCase();
+            if (!typedVal) return;
+
+            // Check if typedVal matches any active word
+            const matchedIndex = gameState.activeWords.findIndex(w => w.text.toLowerCase() === typedVal);
+
+            if (matchedIndex !== -1) {
+                // Word eaten successfully!
+                const matchedWord = gameState.activeWords[matchedIndex];
+                
+                // Visual feedback: Pac-Man eating animation effect
+                matchedWord.element.classList.add('scale-125', 'bg-yellow-400', 'text-slate-950', 'transition-all');
+                matchedWord.element.textContent = "💥 " + matchedWord.text;
+                
+                setTimeout(() => {
+                    matchedWord.element.remove();
+                }, 200);
+
+                gameState.activeWords.splice(matchedIndex, 1);
+                
+                // Add score
+                gameState.score += (gameState.level * 10) + matchedWord.text.length * 2;
+                gameState.eatenCount++;
+                updateHUD();
+
+                // Clear input box instantly
+                wordInput.value = "";
+                inputFeedback.textContent = "Ottimo! 🟡";
+                setTimeout(() => { inputFeedback.textContent = "Pronto!"; }, 1000);
+
+                // Check win condition (e.g. 15 words eaten)
+                if (gameState.eatenCount >= gameState.targetCount) {
+                    endGame(true);
+                }
+            }
+        });
+
+        // Also handle Space or Enter key to clear input if mistyped or reset
+        wordInput.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                wordInput.value = "";
+            }
+        });
+
+        function endGame(isVictory) {
+            gameState.isrunning = false;
+            clearInterval(gameState.gameInterval);
+            clearInterval(gameState.spawnInterval);
+
+            // Clear remaining words
+            wordsContainer.innerHTML = "";
+
+            // Populate Report Screen
+            document.getElementById('rep-nome').textContent = `${gameState.nome} ${gameState.cognome}`;
+            document.getElementById('rep-data').textContent = new Date(gameState.data).toLocaleDateString('it-IT');
+            document.getElementById('rep-classe').textContent = gameState.classe;
+            document.getElementById('rep-diff').textContent = `Livello ${gameState.level}`;
+            
+            document.getElementById('rep-score').textContent = gameState.score;
+            document.getElementById('rep-eaten').textContent = gameState.eatenCount;
+            document.getElementById('rep-missed').textContent = (3 - gameState.lives);
+
+            const reportBadge = document.getElementById('report-badge');
+            const reportTitle = document.getElementById('report-title');
+
+            if (isVictory) {
+                reportBadge.textContent = "VITTORIA ARCADE 🏆";
+                reportBadge.className = "inline-block px-4 py-1 rounded-full bg-emerald-400/10 text-emerald-400 font-arcade text-xs mb-3 border border-emerald-400/30";
+                reportTitle.textContent = "COMPLIMENTI!";
+                reportTitle.className = "font-arcade text-emerald-400 text-2xl mb-1";
+            } else {
+                reportBadge.textContent = "GAME OVER 👾";
+                reportBadge.className = "inline-block px-4 py-1 rounded-full bg-pink-400/10 text-pink-400 font-arcade text-xs mb-3 border border-pink-400/30";
+                reportTitle.textContent = "PARTITA TERMINATA";
+                reportTitle.className = "font-arcade text-pink-400 text-2xl mb-1";
+            }
+
+            // Switch to report screen
+            screenGame.classList.add('hidden');
+            screenReport.classList.remove('hidden');
+        }
+
+        function resetToRegistration() {
+            screenReport.classList.add('hidden');
+            screenReg.classList.remove('hidden');
+            formReg.reset();
+            inputData.valueAsDate = new Date();
+        }
+    </script>
+</body>
+</html>
