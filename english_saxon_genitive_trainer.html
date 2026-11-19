@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Arcade - Saxon Genitive Trainer (1ª Media)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        .font-arcade { font-family: 'Press Start 2P', monospace; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #060818;
+            color: #f8fafc;
+        }
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.25) 50%,
+                rgba(0, 0, 0, 0.25)
+            );
+            background-size: 100% 4px;
+        }
+        .neon-border-yellow {
+            border: 2px solid #facc15;
+            box-shadow: 0 0 18px rgba(250, 204, 21, 0.25);
+        }
+        .neon-border-cyan {
+            border: 2px solid #06b6d4;
+            box-shadow: 0 0 18px rgba(6, 182, 212, 0.25);
+        }
+        .neon-border-emerald {
+            border: 2px solid #10b981;
+            box-shadow: 0 0 18px rgba(16, 185, 129, 0.25);
+        }
+        .bold-target {
+            color: #facc15;
+            font-weight: 800;
+            background: rgba(250, 204, 21, 0.14);
+            padding: 1px 6px;
+            border-radius: 6px;
+            border-bottom: 2px solid #facc15;
+        }
+        .choice-badge {
+            color: #38bdf8;
+            font-weight: 800;
+            background: rgba(56, 189, 248, 0.14);
+            padding: 1px 7px;
+            border-radius: 6px;
+            border-bottom: 2px dashed #38bdf8;
+        }
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .no-print { display: none !important; }
+            .scanlines { background: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between scanlines selection:bg-yellow-400 selection:text-slate-950">
+
+    <!-- Top Header -->
+    <header class="w-full bg-slate-950/90 border-b border-yellow-400/30 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-3 no-print z-20 backdrop-blur-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-yellow-400 text-slate-950 font-arcade text-xs flex items-center justify-center shadow-[0_0_12px_#facc15]">EN</div>
+            <div>
+                <h1 class="font-arcade text-yellow-400 text-xs sm:text-sm tracking-wide">SAXON GENITIVE QUEST</h1>
+                <p class="text-xs text-cyan-400">Palestra di Inglese • 1ª Media</p>
+            </div>
+        </div>
+
+        <!-- Teacher / JSON Structural Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btn-json-save" title="Salva tutta la struttura e i dati dell'esercizio in formato JSON"
+                class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition shadow-md flex items-center gap-1.5">
+                <span>{}</span> <span>Json</span>
+            </button>
+            <button type="button" id="btn-export-new" title="Esporta il template JSON per creare un nuovo esercizio"
+                class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition shadow-md flex items-center gap-1.5">
+                <span>📤</span> <span>Esporta per Nuovo Esercizio</span>
+            </button>
+            <label for="file-import-json" title="Carica un file JSON per avviare un nuovo esercizio"
+                class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 font-semibold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+                <span>📥</span> <span>Importa JSON</span>
+            </label>
+            <input type="file" id="file-import-json" accept=".json" class="hidden">
+        </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 border-2 border-cyan-400 text-cyan-300 px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold max-w-sm"></div>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6">
+
+        <!-- STEP 1: REGISTRATION & TIMER SETUP -->
+        <section id="screen-setup" class="w-full max-w-2xl bg-slate-900/95 p-6 sm:p-8 rounded-2xl neon-border-yellow backdrop-blur-md">
+            <div class="text-center mb-6">
+                <span class="inline-block px-3 py-1 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 font-arcade text-[10px] mb-2">
+                    GRAMMAR & TYPING • LIVELLO 1ª MEDIA
+                </span>
+                <h2 class="font-arcade text-yellow-400 text-lg sm:text-xl mb-2">IL GENITIVO SASSONE</h2>
+                <p class="text-slate-300 text-sm">
+                    Leggi il testo di 3 righe in inglese: <span class="text-cyan-400 font-bold">scegli l'alternativa corretta</span> tra due proposte e <span class="text-yellow-400 font-bold">ricopia le parole in grassetto</span>!
+                </p>
+            </div>
+
+            <form id="setup-form" class="space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-arcade text-yellow-400 mb-2">NOME</label>
+                        <input type="text" id="reg-nome" required placeholder="Es. Luca"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-arcade text-yellow-400 mb-2">COGNOME</label>
+                        <input type="text" id="reg-cognome" required placeholder="Es. Bianchi"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-arcade text-cyan-400 mb-2">CLASSE</label>
+                        <input type="text" id="reg-classe" required placeholder="Es. 1ªB"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-arcade text-cyan-400 mb-2">DATA</label>
+                        <input type="date" id="reg-data" required
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <!-- Timer Selection -->
+                <div>
+                    <label class="block text-xs font-arcade text-pink-400 mb-3">MODALITÀ TIMER</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="timerMode" value="180" checked class="peer sr-only">
+                            <div class="bg-slate-950 border-2 border-slate-700 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/10 rounded-xl p-3 text-center transition">
+                                <div class="font-arcade text-yellow-400 text-xs mb-1">180 SEC</div>
+                                <div class="text-[11px] text-slate-400">3 Minuti</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="timerMode" value="240" class="peer sr-only">
+                            <div class="bg-slate-950 border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:bg-cyan-400/10 rounded-xl p-3 text-center transition">
+                                <div class="font-arcade text-cyan-400 text-xs mb-1">240 SEC</div>
+                                <div class="text-[11px] text-slate-400">4 Minuti</div>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="timerMode" value="0" class="peer sr-only">
+                            <div class="bg-slate-950 border-2 border-slate-700 peer-checked:border-emerald-400 peer-checked:bg-emerald-400/10 rounded-xl p-3 text-center transition">
+                                <div class="font-arcade text-emerald-400 text-xs mb-1">NO TIMER</div>
+                                <div class="text-[11px] text-slate-400">Senza limite</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-arcade text-sm py-4 rounded-xl font-bold hover:opacity-95 active:scale-[0.99] transition shadow-[0_0_20px_rgba(250,204,21,0.4)]">
+                    INIZIA ESERCIZIO 🕹️
+                </button>
+            </form>
+        </section>
+
+        <!-- STEP 2: EXERCISE SCREEN -->
+        <section id="screen-exercise" class="w-full max-w-3xl bg-slate-900/95 p-6 sm:p-8 rounded-2xl neon-border-cyan hidden">
+            <!-- Top Status Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950 px-5 py-3 rounded-xl border border-cyan-500/30 mb-6">
+                <div class="text-xs text-slate-300">
+                    Alunno: <span id="hud-student" class="font-bold text-white">-</span> (<span id="hud-class" class="text-cyan-400">-</span>)
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" id="btn-disable-timer-live"
+                        class="text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/40 px-3 py-1.5 rounded-lg transition">
+                        ⏱️ Passa a No Timer
+                    </button>
+                    <div class="font-arcade text-sm text-yellow-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-yellow-400/30">
+                        <span id="hud-timer">03:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="mb-4">
+                <h3 class="font-arcade text-cyan-400 text-xs sm:text-sm mb-2">CONSEGNA DELL'ESERCIZIO</h3>
+                <p id="exercise-instructions" class="text-slate-300 text-sm">
+                    Completa i <strong class="text-cyan-400">3 punti a doppia scelta</strong> selezionando la forma corretta del genitivo sassone e ricopia negli spazi le <strong class="text-yellow-400">3 espressioni in grassetto</strong> rispettando l'apostrofo.
+                </p>
+            </div>
+
+            <!-- 3-Line English Text Box -->
+            <div class="bg-slate-950 border-2 border-yellow-400/40 rounded-xl p-5 sm:p-6 mb-6 shadow-inner">
+                <div id="english-passage" class="text-base sm:text-lg leading-relaxed text-slate-100 space-y-2.5">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Student Inputs for Choice & Bold Words -->
+            <div class="mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <span class="font-arcade text-xs text-pink-400">COMPLETA GLI ELEMENTI (<span id="target-count">0</span>)</span>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="text-cyan-400 font-semibold">🔵 Scegli tra 2 proposte</span>
+                        <span class="text-yellow-400 font-semibold">🟡 Ricopia il grassetto</span>
+                    </div>
+                </div>
+                <div id="inputs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <!-- Choice cards & Input boxes generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Submit / Finish Button -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button type="button" id="btn-finish-exercise"
+                    class="flex-1 bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-arcade text-xs sm:text-sm py-4 rounded-xl font-bold hover:opacity-95 transition shadow-[0_0_18px_rgba(16,185,129,0.4)]">
+                    CONSEGNA E VEDI REPORT ✅
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 3: REPORT SCREEN -->
+        <section id="screen-report" class="w-full max-w-3xl bg-slate-900/95 p-6 sm:p-8 rounded-2xl neon-border-emerald hidden">
+            <div class="text-center mb-6">
+                <span class="inline-block px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/30 text-emerald-400 font-arcade text-[10px] mb-2">
+                    RISULTATO FINALE
+                </span>
+                <h2 class="font-arcade text-emerald-400 text-lg sm:text-2xl mb-1">REPORT DELL'ESERCIZIO</h2>
+                <p class="text-slate-400 text-xs">Genitivo Sassone (Saxon Genitive) • Lingua Inglese</p>
+            </div>
+
+            <!-- Student Info Summary -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6 text-xs">
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[9px] mb-1">ALUNNO/A</span>
+                    <span id="rep-student" class="font-bold text-white text-sm">-</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[9px] mb-1">CLASSE</span>
+                    <span id="rep-class" class="font-bold text-cyan-400 text-sm">-</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[9px] mb-1">DATA</span>
+                    <span id="rep-date" class="font-bold text-white text-sm">-</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-arcade text-[9px] mb-1">TEMPO / MODALITÀ</span>
+                    <span id="rep-time" class="font-bold text-yellow-400 text-sm">-</span>
+                </div>
+            </div>
+
+            <!-- Score Cards -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-slate-950 p-4 rounded-xl border border-yellow-400/30 text-center">
+                    <div id="rep-score-pct" class="font-arcade text-yellow-400 text-xl sm:text-2xl mb-1">0%</div>
+                    <div class="text-xs text-slate-400">Precisione</div>
+                </div>
+                <div class="bg-slate-950 p-4 rounded-xl border border-emerald-400/30 text-center">
+                    <div id="rep-correct-count" class="font-arcade text-emerald-400 text-xl sm:text-2xl mb-1">0/0</div>
+                    <div class="text-xs text-slate-400">Corrette</div>
+                </div>
+                <div class="bg-slate-950 p-4 rounded-xl border border-pink-400/30 text-center">
+                    <div id="rep-errors-count" class="font-arcade text-pink-400 text-xl sm:text-2xl mb-1">0</div>
+                    <div class="text-xs text-slate-400">Errori / Mancanti</div>
+                </div>
+            </div>
+
+            <!-- Detailed Word-by-Word Comparison -->
+            <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 mb-6">
+                <h4 class="font-arcade text-xs text-cyan-400 mb-3">DETTAGLIO RISPOSTE</h4>
+                <div id="rep-details-list" class="space-y-2 text-sm">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 no-print">
+                <button type="button" id="btn-download-report"
+                    class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <span>📥</span> <span>Scarica Report</span>
+                </button>
+                <button type="button" onclick="window.print()"
+                    class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <span>🖨️</span> <span>Stampa</span>
+                </button>
+                <button type="button" id="btn-json-report"
+                    class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-3.5 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <span>{}</span> <span>Json</span>
+                </button>
+                <button type="button" id="btn-restart"
+                    class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border border-yellow-400/40 font-bold text-xs py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-2">
+                    <span>🔄</span> <span>Nuova Prova</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-3 text-center text-[11px] text-slate-500 no-print font-arcade">
+        English Ortho & Grammar Arcade • 1ª Media
+    </footer>
+
+    <script>
+        // Default 3-line exercise structure with hybrid tasks:
+        // - {{1}}, {{3}}, {{5}}: double-choice insertion (choice between 2 Saxon genitive proposals)
+        // - **text**: bold expressions to copy accurately (typing consolidation)
+        let exerciseConfig = {
+            schemaVersion: "2.0",
+            exerciseType: "saxon_genitive_hybrid_choice_and_copy",
+            title: "Il Genitivo Sassone - Scelta Guidata e Ricopiatura",
+            language: "en",
+            topic: "Saxon Genitive (Genitivo Sassone)",
+            schoolLevel: "1ª Media",
+            instructions: "Osserva il testo di 3 righe: per i punti blu [1], [3], [5] scegli l'alternativa grammaticalmente corretta tra le due proposte; per le parole evidenziate in grassetto giallo (#2, #4, #6) ricopiale con precisione facendo attenzione all'apostrofo.",
+            grammarRules: [
+                "Singolare (persona o animale): si aggiunge 's (es. Mark's birthday, the dog's house).",
+                "Plurale regolare che termina in -s: si aggiunge solo l'apostrofo dopo la -s (es. my parents' garden).",
+                "Plurale irregolare che non termina in -s: si aggiunge 's (es. the children's balloons).",
+                "Nome proprio che termina in -s: si usa comunemente 's (es. James's puppy)."
+            ],
+            lines: [
+                "Today is {{1}} birthday and we are celebrating in **my parents'** garden.",
+                "On the table there are {{3}} gifts and **the children's** colorful balloons.",
+                "Look! {{5}} puppy is playing happily near **the dog's** little wooden house."
+            ],
+            items: [
+                {
+                    id: 1,
+                    type: "choice",
+                    label: "Punto [1] (singolare: Mark)",
+                    options: ["Mark's", "Marks'"],
+                    answer: "Mark's",
+                    hint: "Singolare: si aggiunge 's"
+                },
+                {
+                    id: 2,
+                    type: "copy",
+                    label: "Grassetto #2 (plurale regolare: parents)",
+                    answer: "my parents'",
+                    hint: "Plurale in -s: solo apostrofo dopo la s"
+                },
+                {
+                    id: 3,
+                    type: "choice",
+                    label: "Punto [3] (singolare: Sarah)",
+                    options: ["Sarahs'", "Sarah's"],
+                    answer: "Sarah's",
+                    hint: "Nome proprio singolare: 's"
+                },
+                {
+                    id: 4,
+                    type: "copy",
+                    label: "Grassetto #4 (plurale irregolare: children)",
+                    answer: "the children's",
+                    hint: "Plurale irregolare senza -s: si aggiunge 's"
+                },
+                {
+                    id: 5,
+                    type: "choice",
+                    label: "Punto [5] (nome proprio in -s: James)",
+                    options: ["James's", "Jame's"],
+                    answer: "James's",
+                    hint: "Il nome è James: si mantiene la s finale e si aggiunge 's"
+                },
+                {
+                    id: 6,
+                    type: "copy",
+                    label: "Grassetto #6 (singolare: the dog)",
+                    answer: "the dog's",
+                    hint: "Possessore singolare: 's"
+                }
+            ],
+            timerOptionsSeconds: [180, 240, 0],
+            defaultTimerSeconds: 180
+        };
+
+        // DOM Screen & Form References
+        const screenSetup = document.getElementById('screen-setup');
+        const screenExercise = document.getElementById('screen-exercise');
+        const screenReport = document.getElementById('screen-report');
+        const setupForm = document.getElementById('setup-form');
+        const toastBox = document.getElementById('toast-box');
+        let toastTimeout = null;
+
+        // Non-blocking notification helper (replaces alert())
+        function showToast(message, isError = false) {
+            if (!toastBox) return;
+            toastBox.textContent = message;
+            toastBox.classList.remove('hidden', 'border-cyan-400', 'text-cyan-300', 'border-pink-500', 'text-pink-300');
+            if (isError) {
+                toastBox.classList.add('border-pink-500', 'text-pink-300');
+            } else {
+                toastBox.classList.add('border-cyan-400', 'text-cyan-300');
+            }
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastBox.classList.add('hidden');
+            }, 3500);
+        }
+
+        // Pre-populate date field with today's date (editable by user)
+        const regDateInput = document.getElementById('reg-data');
+        if (regDateInput && !regDateInput.value) {
+            regDateInput.valueAsDate = new Date();
+        }
+
+        // Session State
+        let sessionState = {
+            nome: "",
+            cognome: "",
+            classe: "",
+            data: "",
+            timerModeSeconds: 180,
+            secondsRemaining: 180,
+            secondsElapsed: 0,
+            timerInterval: null,
+            isNoTimer: false,
+            activeItems: [],
+            selectedChoices: {},
+            results: [],
+            completed: false
+        };
+
+        // Build active items list from exerciseConfig (supports both explicit items array and legacy **bold** lines)
+        function buildExerciseItems(config) {
+            if (Array.isArray(config.items) && config.items.length > 0) {
+                return config.items.map((item, idx) => ({
+                    id: item.id || idx + 1,
+                    type: item.type === "choice" ? "choice" : "copy",
+                    label: item.label || (item.type === "choice" ? `Scelta [${idx + 1}]` : `Grassetto #${idx + 1}`),
+                    options: Array.isArray(item.options) ? item.options : [],
+                    answer: (item.answer || "").trim(),
+                    hint: item.hint || ""
+                }));
+            }
+            const targets = [];
+            const regex = /\*\*(.+?)\*\*/g;
+            (config.lines || []).forEach(line => {
+                let match;
+                while ((match = regex.exec(line)) !== null) {
+                    targets.push({
+                        id: targets.length + 1,
+                        type: "copy",
+                        label: `Grassetto #${targets.length + 1}`,
+                        options: [],
+                        answer: match[1].trim(),
+                        hint: ""
+                    });
+                }
+            });
+            return targets;
+        }
+
+        // Render the 3 lines with choice placeholders + bold targets, and generate interactive cards
+        function renderExerciseContent() {
+            const passageEl = document.getElementById('english-passage');
+            const inputsGrid = document.getElementById('inputs-grid');
+            const instructionsEl = document.getElementById('exercise-instructions');
+
+            instructionsEl.textContent = exerciseConfig.instructions;
+            sessionState.activeItems = buildExerciseItems(exerciseConfig);
+            sessionState.selectedChoices = {};
+            document.getElementById('target-count').textContent = sessionState.activeItems.length;
+
+            // Render 3 lines replacing {{id}} with interactive preview badge and **word** with bold highlight
+            passageEl.innerHTML = exerciseConfig.lines.map((line, lineIdx) => {
+                let formatted = line.replace(/\{\{(\d+)\}\}/g, (_, id) => {
+                    const item = sessionState.activeItems.find(it => String(it.id) === String(id));
+                    const preview = item && item.options.length === 2
+                        ? `[${id}: ${item.options[0]} / ${item.options[1]}]`
+                        : `[${id}: ___]`;
+                    return `<span id="passage-slot-${id}" class="choice-badge">${preview}</span>`;
+                });
+                formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<span class="bold-target">$1</span>');
+                return `<p class="flex items-start gap-2"><span class="font-arcade text-[10px] text-slate-500 mt-1.5 shrink-0">R${lineIdx + 1}</span><span>${formatted}</span></p>`;
+            }).join('');
+
+            // Render cards: 2-option clickable buttons for "choice", text input for "copy"
+            inputsGrid.innerHTML = sessionState.activeItems.map((item, idx) => {
+                if (item.type === "choice") {
+                    const optA = item.options[0] || "";
+                    const optB = item.options[1] || "";
+                    return `
+                    <div class="bg-slate-950 border border-cyan-500/40 rounded-xl p-3.5 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-arcade text-[10px] text-cyan-400">SCELTA [${item.id}]</span>
+                            <span class="text-[11px] text-slate-400 text-right">${item.label}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2" data-choice-group="${idx}">
+                            <button type="button" data-item-idx="${idx}" data-item-id="${item.id}" data-option="${optA.replace(/"/g, '&quot;')}"
+                                class="choice-opt-btn bg-slate-900 hover:bg-slate-800 border-2 border-slate-700 text-slate-100 font-bold text-sm py-2.5 px-3 rounded-lg transition">
+                                ${optA}
+                            </button>
+                            <button type="button" data-item-idx="${idx}" data-item-id="${item.id}" data-option="${optB.replace(/"/g, '&quot;')}"
+                                class="choice-opt-btn bg-slate-900 hover:bg-slate-800 border-2 border-slate-700 text-slate-100 font-bold text-sm py-2.5 px-3 rounded-lg transition">
+                                ${optB}
+                            </button>
+                        </div>
+                        <div id="choice-status-${idx}" class="text-[11px] text-slate-500">Seleziona un'alternativa tra le due proposte.</div>
+                    </div>`;
+                } else {
+                    return `
+                    <div class="bg-slate-950 border border-yellow-400/40 focus-within:border-yellow-400 rounded-xl p-3.5 flex flex-col justify-between gap-2 transition">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-arcade text-[10px] text-yellow-400">RICOPIA #${item.id}</span>
+                            <span class="text-[11px] text-slate-400 text-right">${item.label}</span>
+                        </div>
+                        <input type="text" data-item-idx="${idx}" autocomplete="off" spellcheck="false"
+                            placeholder="Ricopia il grassetto #${item.id}..."
+                            class="bold-answer-input w-full bg-slate-900 border border-slate-700 focus:border-yellow-400 rounded-lg px-3 py-2 text-white font-semibold text-sm focus:outline-none">
+                    </div>`;
+                }
+            }).join('');
+
+            // Attach click handlers to double-choice buttons with immediate visual selection feedback
+            document.querySelectorAll('.choice-opt-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = btn.getAttribute('data-item-idx');
+                    const itemId = btn.getAttribute('data-item-id');
+                    const chosenVal = btn.getAttribute('data-option');
+
+                    sessionState.selectedChoices[idx] = chosenVal;
+
+                    const siblings = document.querySelectorAll(`.choice-opt-btn[data-item-idx="${idx}"]`);
+                    siblings.forEach(s => {
+                        s.classList.remove('border-cyan-400', 'bg-cyan-400/20', 'text-cyan-300', 'shadow-[0_0_10px_rgba(34,211,238,0.3)]');
+                        s.classList.add('border-slate-700', 'bg-slate-900', 'text-slate-100');
+                    });
+                    btn.classList.remove('border-slate-700', 'bg-slate-900', 'text-slate-100');
+                    btn.classList.add('border-cyan-400', 'bg-cyan-400/20', 'text-cyan-300', 'shadow-[0_0_10px_rgba(34,211,238,0.3)]');
+
+                    const statusEl = document.getElementById(`choice-status-${idx}`);
+                    if (statusEl) {
+                        statusEl.textContent = `Scelta selezionata: ${chosenVal}`;
+                        statusEl.classList.remove('text-slate-500');
+                        statusEl.classList.add('text-cyan-300', 'font-semibold');
+                    }
+
+                    const passageSlot = document.getElementById(`passage-slot-${itemId}`);
+                    if (passageSlot) {
+                        passageSlot.textContent = chosenVal;
+                    }
+                });
+            });
+        }
+
+        // Format seconds into MM:SS
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function startTimer() {
+            clearInterval(sessionState.timerInterval);
+            const hudTimer = document.getElementById('hud-timer');
+            const btnDisableTimer = document.getElementById('btn-disable-timer-live');
+
+            if (sessionState.isNoTimer || sessionState.timerModeSeconds === 0) {
+                hudTimer.textContent = "NO TIMER";
+                btnDisableTimer.classList.add('hidden');
+            } else {
+                hudTimer.textContent = formatTime(sessionState.secondsRemaining);
+                btnDisableTimer.classList.remove('hidden');
+            }
+
+            sessionState.timerInterval = setInterval(() => {
+                sessionState.secondsElapsed++;
+                if (!sessionState.isNoTimer && sessionState.timerModeSeconds > 0) {
+                    sessionState.secondsRemaining--;
+                    hudTimer.textContent = formatTime(Math.max(0, sessionState.secondsRemaining));
+
+                    if (sessionState.secondsRemaining <= 20) {
+                        hudTimer.classList.add('text-pink-400');
+                    }
+                    if (sessionState.secondsRemaining <= 0) {
+                        clearInterval(sessionState.timerInterval);
+                        showToast("Tempo scaduto! Consegna automatica dell'esercizio.");
+                        finishExercise();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Switch to "No Timer" during exercise
+        document.getElementById('btn-disable-timer-live').addEventListener('click', () => {
+            sessionState.isNoTimer = true;
+            document.getElementById('hud-timer').textContent = "NO TIMER";
+            document.getElementById('hud-timer').classList.remove('text-pink-400');
+            document.getElementById('btn-disable-timer-live').classList.add('hidden');
+            showToast("Modalità No Timer attivata!");
+        });
+
+        // Start Exercise Form Submit
+        setupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sessionState.nome = document.getElementById('reg-nome').value.trim();
+            sessionState.cognome = document.getElementById('reg-cognome').value.trim();
+            sessionState.classe = document.getElementById('reg-classe').value.trim();
+            sessionState.data = document.getElementById('reg-data').value;
+
+            const chosenTimer = parseInt(document.querySelector('input[name="timerMode"]:checked').value, 10);
+            sessionState.timerModeSeconds = chosenTimer;
+            sessionState.secondsRemaining = chosenTimer;
+            sessionState.secondsElapsed = 0;
+            sessionState.isNoTimer = (chosenTimer === 0);
+            sessionState.completed = false;
+
+            document.getElementById('hud-student').textContent = `${sessionState.nome} ${sessionState.cognome}`;
+            document.getElementById('hud-class').textContent = sessionState.classe;
+
+            renderExerciseContent();
+
+            screenSetup.classList.add('hidden');
+            screenReport.classList.add('hidden');
+            screenExercise.classList.remove('hidden');
+
+            startTimer();
+
+            const firstInput = document.querySelector('.bold-answer-input');
+            if (firstInput) firstInput.focus();
+        });
+
+        // Normalize curly apostrophes to straight apostrophes for fair comparison
+        function normalizeApostrophe(str) {
+            return str.trim().replace(/[\u2018\u2019\u02BC]/g, "'");
+        }
+
+        // Finish Exercise & Evaluate
+        function finishExercise() {
+            clearInterval(sessionState.timerInterval);
+            sessionState.completed = true;
+
+            let correctCount = 0;
+
+            sessionState.results = sessionState.activeItems.map((item, idx) => {
+                let userRaw = "";
+                if (item.type === "choice") {
+                    userRaw = sessionState.selectedChoices[idx] || "";
+                } else {
+                    const inputEl = document.querySelector(`.bold-answer-input[data-item-idx="${idx}"]`);
+                    userRaw = inputEl ? inputEl.value : "";
+                }
+
+                const isCorrect = normalizeApostrophe(userRaw) === normalizeApostrophe(item.answer);
+                if (isCorrect) correctCount++;
+                return {
+                    index: item.id,
+                    type: item.type,
+                    label: item.label,
+                    options: item.options,
+                    expected: item.answer,
+                    typed: userRaw.trim(),
+                    hint: item.hint,
+                    correct: isCorrect
+                };
+            });
+
+            const total = sessionState.activeItems.length;
+            const errors = total - correctCount;
+            const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+            // Populate Report UI
+            document.getElementById('rep-student').textContent = `${sessionState.nome} ${sessionState.cognome}`;
+            document.getElementById('rep-class').textContent = sessionState.classe;
+            document.getElementById('rep-date').textContent = sessionState.data ? new Date(sessionState.data).toLocaleDateString('it-IT') : '-';
+            document.getElementById('rep-time').textContent = sessionState.isNoTimer
+                ? `No Timer (${sessionState.secondsElapsed}s)`
+                : `${sessionState.secondsElapsed}s / ${sessionState.timerModeSeconds}s`;
+
+            document.getElementById('rep-score-pct').textContent = `${pct}%`;
+            document.getElementById('rep-correct-count').textContent = `${correctCount}/${total}`;
+            document.getElementById('rep-errors-count').textContent = `${errors}`;
+
+            const detailsList = document.getElementById('rep-details-list');
+            detailsList.innerHTML = sessionState.results.map(r => {
+                const badge = r.type === "choice"
+                    ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 mr-2">SCELTA</span>`
+                    : `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-400/20 text-yellow-300 mr-2">RICOPIA</span>`;
+                return `
+                <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg border ${r.correct ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-pink-500/30 bg-pink-500/5'}">
+                    <div>
+                        <span class="font-arcade text-[10px] text-slate-400 mr-1.5">#${r.index}</span>
+                        ${badge}
+                        <span class="text-slate-300">Corretto:</span> <strong class="text-yellow-400">${r.expected}</strong>
+                        ${!r.correct && r.hint ? `<span class="block text-xs text-slate-400 mt-1">💡 ${r.hint}</span>` : ''}
+                    </div>
+                    <div>
+                        <span class="text-slate-400">${r.type === 'choice' ? 'Scelto:' : 'Scritto:'}</span>
+                        <strong class="${r.correct ? 'text-emerald-400' : 'text-pink-400'}">${r.typed || '(nessuna risposta)'}</strong>
+                        <span class="ml-2">${r.correct ? '✅' : '❌'}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            screenExercise.classList.add('hidden');
+            screenReport.classList.remove('hidden');
+        }
+
+        document.getElementById('btn-finish-exercise').addEventListener('click', finishExercise);
+
+        // Helper to trigger file download
+        function downloadFile(filename, content, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 1. Downloadable Report (.html standalone report file)
+        document.getElementById('btn-download-report').addEventListener('click', () => {
+            const total = sessionState.activeItems.length;
+            const correctCount = sessionState.results.filter(r => r.correct).length;
+            const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+            const rowsHtml = sessionState.results.map(r => `
+                <tr>
+                    <td style="padding:8px;border:1px solid #cbd5e1;">#${r.index} (${r.type === 'choice' ? 'Doppia scelta' : 'Ricopiatura'})</td>
+                    <td style="padding:8px;border:1px solid #cbd5e1;font-weight:bold;">${r.expected}</td>
+                    <td style="padding:8px;border:1px solid #cbd5e1;">${r.typed || '(nessuna risposta)'}</td>
+                    <td style="padding:8px;border:1px solid #cbd5e1;">${r.correct ? 'Corretto' : 'Errore'}</td>
+                </tr>
+            `).join('');
+
+            const renderedPassageHtml = exerciseConfig.lines.map(l => {
+                let txt = l.replace(/\{\{(\d+)\}\}/g, (_, id) => {
+                    const it = sessionState.activeItems.find(x => String(x.id) === String(id));
+                    return it ? `<u>[${it.options.join(' / ')}]</u>` : `[${id}]`;
+                });
+                txt = txt.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                return `<p style="margin:4px 0;">${txt}</p>`;
+            }).join('');
+
+            const reportHtml = `<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8"><title>Report Genitivo Sassone - ${sessionState.nome} ${sessionState.cognome}</title></head>
+<body style="font-family:Arial,sans-serif;max-width:750px;margin:30px auto;padding:20px;color:#0f172a;">
+    <h1 style="border-bottom:2px solid #0f172a;padding-bottom:10px;">Report Esercizio: Il Genitivo Sassone</h1>
+    <p><strong>Alunno:</strong> ${sessionState.nome} ${sessionState.cognome} | <strong>Classe:</strong> ${sessionState.classe} | <strong>Data:</strong> ${sessionState.data}</p>
+    <p><strong>Modalità Timer:</strong> ${sessionState.isNoTimer ? 'No Timer' : sessionState.timerModeSeconds + ' secondi'} | <strong>Tempo impiegato:</strong> ${sessionState.secondsElapsed} secondi</p>
+    <p><strong>Risultato:</strong> ${correctCount}/${total} (${pct}%)</p>
+    <h3>Testo dell'esercizio:</h3>
+    <div style="background:#f8fafc;padding:12px;border-left:4px solid #eab308;margin-bottom:20px;">
+        ${renderedPassageHtml}
+    </div>
+    <table style="width:100%;border-collapse:collapse;text-align:left;">
+        <thead>
+            <tr style="background:#e2e8f0;">
+                <th style="padding:8px;border:1px solid #cbd5e1;">N. e Tipo</th>
+                <th style="padding:8px;border:1px solid #cbd5e1;">Forma corretta</th>
+                <th style="padding:8px;border:1px solid #cbd5e1;">Risposta alunno</th>
+                <th style="padding:8px;border:1px solid #cbd5e1;">Esito</th>
+            </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+    </table>
+</body>
+</html>`;
+
+            const safeName = `${sessionState.cognome || 'alunno'}_${sessionState.nome || 'report'}`.toLowerCase().replace(/\s+/g, '_');
+            downloadFile(`report_genitivo_sassone_${safeName}.html`, reportHtml, 'text/html;charset=utf-8');
+            showToast("Report scaricato con successo!");
+        });
+
+        // 2. "Json" Button: Save full exercise structure + current student/session info
+        function saveFullJson() {
+            const currentNome = document.getElementById('reg-nome').value.trim() || sessionState.nome;
+            const currentCognome = document.getElementById('reg-cognome').value.trim() || sessionState.cognome;
+            const currentClasse = document.getElementById('reg-classe').value.trim() || sessionState.classe;
+            const currentData = document.getElementById('reg-data').value || sessionState.data;
+
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                exerciseStructure: {
+                    ...exerciseConfig,
+                    items: buildExerciseItems(exerciseConfig)
+                },
+                studentSession: {
+                    nome: currentNome,
+                    cognome: currentCognome,
+                    classe: currentClasse,
+                    data: currentData,
+                    timerModeSeconds: sessionState.isNoTimer ? 0 : sessionState.timerModeSeconds,
+                    isNoTimer: sessionState.isNoTimer,
+                    secondsElapsed: sessionState.secondsElapsed,
+                    completed: sessionState.completed,
+                    results: sessionState.results
+                }
+            };
+
+            downloadFile('struttura_esercizio_genitivo_sassone.json', JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+            showToast("File JSON con tutte le informazioni salvato!");
+        }
+
+        document.getElementById('btn-json-save').addEventListener('click', saveFullJson);
+        document.getElementById('btn-json-report').addEventListener('click', saveFullJson);
+
+        // 3. "Esporta per Nuovo Esercizio" Button: Export clean template JSON ready to be edited/reused
+        document.getElementById('btn-export-new').addEventListener('click', () => {
+            const newExerciseTemplate = {
+                schemaVersion: "2.0",
+                exerciseType: "saxon_genitive_hybrid_choice_and_copy",
+                title: "Nuovo Esercizio - Genitivo Sassone (Modifica questo testo)",
+                language: "en",
+                topic: "Saxon Genitive (Genitivo Sassone)",
+                schoolLevel: "1ª Media",
+                instructions: "Scegli l'alternativa corretta nei punti [1], [3], [5] e ricopia le espressioni in grassetto (#2, #4, #6).",
+                grammarRules: [
+                    "Singolare: aggiungi 's (es. Lucy's cat).",
+                    "Plurale regolare in -s: aggiungi solo ' dopo la s (es. my brothers' room).",
+                    "Plurale irregolare senza -s: aggiungi 's (es. women's bags)."
+                ],
+                lines: [
+                    "First line with {{1}} cat and **my brothers'** room.",
+                    "Second line with {{3}} desk and **women's** bags.",
+                    "Third line with {{5}} guitar and **the cat's** milk."
+                ],
+                items: [
+                    {
+                        id: 1,
+                        type: "choice",
+                        label: "Punto [1] (singolare: Lucy)",
+                        options: ["Lucy's", "Lucys'"],
+                        answer: "Lucy's",
+                        hint: "Singolare: si aggiunge 's"
+                    },
+                    {
+                        id: 2,
+                        type: "copy",
+                        label: "Grassetto #2 (plurale regolare: brothers)",
+                        answer: "my brothers'",
+                        hint: "Plurale in -s: apostrofo dopo la s"
+                    },
+                    {
+                        id: 3,
+                        type: "choice",
+                        label: "Punto [3] (singolare: the teacher)",
+                        options: ["the teachers'", "the teacher's"],
+                        answer: "the teacher's",
+                        hint: "Un solo insegnante: 's"
+                    },
+                    {
+                        id: 4,
+                        type: "copy",
+                        label: "Grassetto #4 (plurale irregolare: women)",
+                        answer: "women's",
+                        hint: "Plurale irregolare senza -s: si aggiunge 's"
+                    },
+                    {
+                        id: 5,
+                        type: "choice",
+                        label: "Punto [5] (nome in -s: Thomas)",
+                        options: ["Thomas's", "Thoma's"],
+                        answer: "Thomas's",
+                        hint: "Il nome termina già con s: si aggiunge 's"
+                    },
+                    {
+                        id: 6,
+                        type: "copy",
+                        label: "Grassetto #6 (singolare: the cat)",
+                        answer: "the cat's",
+                        hint: "Singolare: 's"
+                    }
+                ],
+                timerOptionsSeconds: [180, 240, 0],
+                defaultTimerSeconds: 180
+            };
+
+            downloadFile('template_nuovo_esercizio.json', JSON.stringify(newExerciseTemplate, null, 2), 'application/json;charset=utf-8');
+            showToast("Template JSON esportato! Modifica opzioni, righe e risposte e re-importalo.");
+        });
+
+        // 4. Import JSON to load a new exercise structure dynamically
+        document.getElementById('file-import-json').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    const structure = parsed.exerciseStructure ? parsed.exerciseStructure : parsed;
+
+                    if (!structure.lines || !Array.isArray(structure.lines) || structure.lines.length === 0) {
+                        throw new Error("Il file JSON non contiene l'array 'lines' valido.");
+                    }
+
+                    exerciseConfig = {
+                        ...exerciseConfig,
+                        ...structure,
+                        items: Array.isArray(structure.items) ? structure.items : undefined
+                    };
+
+                    if (parsed.studentSession) {
+                        if (parsed.studentSession.nome) document.getElementById('reg-nome').value = parsed.studentSession.nome;
+                        if (parsed.studentSession.cognome) document.getElementById('reg-cognome').value = parsed.studentSession.cognome;
+                        if (parsed.studentSession.classe) document.getElementById('reg-classe').value = parsed.studentSession.classe;
+                        if (parsed.studentSession.data) document.getElementById('reg-data').value = parsed.studentSession.data;
+                    }
+
+                    clearInterval(sessionState.timerInterval);
+                    screenExercise.classList.add('hidden');
+                    screenReport.classList.add('hidden');
+                    screenSetup.classList.remove('hidden');
+
+                    const count = buildExerciseItems(exerciseConfig).length;
+                    showToast(`Nuovo esercizio caricato! (${exerciseConfig.lines.length} righe, ${count} elementi)`);
+                } catch (err) {
+                    showToast("Errore nel file JSON: " + err.message, true);
+                } finally {
+                    e.target.value = "";
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Restart button
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            clearInterval(sessionState.timerInterval);
+            screenReport.classList.add('hidden');
+            screenSetup.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
